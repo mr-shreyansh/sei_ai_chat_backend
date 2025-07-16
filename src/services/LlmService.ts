@@ -5,12 +5,13 @@ import { ILlmService } from "./interfaces/ILlmService";
 import env from "../envConfig";
 import { TYPES } from "../ioc-container/types";
 import { MCPService } from "./MCPService";
-
+import OpenAI from "openai";
 @injectable()
 export class LlmService implements ILlmService {
   private genAI: GoogleGenAI;
   private model: string;
   private sessionId: string;
+  private openai: OpenAI;
   // private model: any;
 
   constructor(@inject(TYPES.MCPService) private mcpService: MCPService) {
@@ -18,7 +19,10 @@ export class LlmService implements ILlmService {
     // this.model =  this.genAI.getGenerativeModel({
     //     model: "gemini-1.5-pro-latest",
     // });
-    this.model = "gemini-2.0-flash-001";
+    this.openai = new OpenAI({
+      apiKey: env.LLAMA_API_KEY,
+    });
+    this.model = "gemini-2.0-flash";
   }
 
   private async getTools(): Promise<any> {
@@ -37,20 +41,22 @@ export class LlmService implements ILlmService {
     if (!this.mcpService.isConnected()) {
       await this.mcpService.connectToMCP();
     }
-    console.log("we start");
     const toolsResponse = await this.mcpService.getTools();
     const tools =
       toolsResponse?.result?.tools || toolsResponse?.tools || toolsResponse;
-    console.log("Actual tools:", JSON.stringify(tools, null, 2));
-    console.log("tools:", tools);
-    console.log("we here still going");
+    const toolNames = tools[0];
+    console.log("Actual tools:", JSON.stringify(toolNames, null, 2));
     const chat = this.genAI.chats.create({
       model: this.model,
+
       config: {
-        tools: [{functionDeclarations: tools}],
+        systemInstruction:
+          "the args you generate should match thr rpoperites of tools you are using, you strictly cannot change the name of args. for example if tools has properties txHash you cannot use hash as args. For transfer_sei the arguments are amount ( in string form ) , from (just from not from_) and to (not to_Address)",
+        tools: [{ functionDeclarations: tools }],
       },
     });
 
+    console.log("we here still going");
     const result = await chat.sendMessage({ message: prompt });
     console.log("this is the first result", result);
     const call = result?.functionCalls?.[0];
@@ -60,7 +66,7 @@ export class LlmService implements ILlmService {
       console.log(`With arguments: ${JSON.stringify(call.args)}`);
 
       const output = await this.mcpService.callTool(call.name, call.args);
-        console.log('this is output',output)
+      console.log("this is output", output);
 
       const functionResponsePart: Part = {
         functionResponse: {
