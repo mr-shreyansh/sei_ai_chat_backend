@@ -103,17 +103,8 @@ class ArrowServer {
     return this.io;
   }
 
-  private async setup(): Promise<void> {
-    try {
-      await mongoose.connect(env.MONGO_URI)
-      console.log('mongoose connected successfully')
-    } catch (err) {
-      throw new Error('error in connecting to mongoDB')
-    }
-  }
-
   public async start(): Promise<void> {
-    await this.setup()
+    // await this.setup()
     this.httpServer.listen(this.port, () => {
       console.log(`server is listening on port ${this.port}`)
     })
