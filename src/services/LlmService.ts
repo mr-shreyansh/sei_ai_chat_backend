@@ -70,10 +70,9 @@ export class LlmService implements ILlmService {
     if (!this.mcpService.isConnected()) {
       await this.mcpService.connectToMCP();
     }
-
     // Ensure chat is initialized
-    await this.initChat(sessionId);
-
+   const response = await this.initChat(sessionId);
+    sessionId = response.sessionId;
     const chat = this.chatSessions.get(sessionId);
     if (!chat) throw new Error("Chat session not initialized");
     let history = this.chatHistories.get(sessionId) || [];
