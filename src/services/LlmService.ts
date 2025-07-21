@@ -16,6 +16,7 @@ export class LlmService implements ILlmService {
   private sessionId: string;
   private openai: OpenAI;
   private chatSessions: Map<string, Chat> = new Map();
+  private chatHistories: Map<string, Array<any>> = new Map();
 
   constructor(@inject(TYPES.MCPService) private mcpService: MCPService) {
     this.genAI = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
@@ -39,18 +40,16 @@ export class LlmService implements ILlmService {
 
   // Initialize and store a chat session for a sessionId (generate if not provided)
   async initChat(sessionId?: string): Promise<{ sessionId: string }> {
-    if (!this.mcpService.isConnected()) {
-      await this.mcpService.connectToMCP();
-    }
     const id = sessionId || uuidv4();
-    if (this.chatSessions.has(id)) return { sessionId: id }; // Already initialized
 
     const toolsResponse = await this.mcpService.getTools();
     const tools =
       toolsResponse?.result?.tools || toolsResponse?.tools || toolsResponse;
 
+    const history = this.chatHistories.get(id) || [];
     const chat = this.genAI.chats.create({
       model: this.model,
+      history: history,
       config: {
         systemInstruction:
           "Always include all possible arguments for a tool, even if they are optional. If the tool has a 'network' parameter, always pass it. If the user does not specify a network, use the default value (e.g., 'sei'). In the response Try to highlight important points, use levels of headings and different bullet points and tables if needed, and also provide referces at the end",
@@ -73,12 +72,22 @@ export class LlmService implements ILlmService {
     }
 
     // Ensure chat is initialized
-    if (!this.chatSessions.has(sessionId)) {
-      await this.initChat(sessionId);
-    }
+    await this.initChat(sessionId);
+
     const chat = this.chatSessions.get(sessionId);
     if (!chat) throw new Error("Chat session not initialized");
+    let history = this.chatHistories.get(sessionId) || [];
 
+    history.push({
+      role: "user",
+      parts: [{ text: prompt }],
+    });
+
+    if (history.length > 2) {
+      history = history.slice(history.length - 2);
+    }
+
+    this.chatHistories.set(sessionId, history);
     const result = await chat.sendMessage({ message: prompt });
     console.log("this is the first result", result);
     const call = result?.functionCalls?.[0];
@@ -100,6 +109,13 @@ export class LlmService implements ILlmService {
       const finalResult = await chat.sendMessage({
         message: [functionResponsePart],
       });
+
+      history.push({
+        role: "model",
+        parts: [{ text: finalResult.text }],
+      });
+
+      this.chatHistories.set(sessionId, history);
 
       return {
         tool: output?.result,
