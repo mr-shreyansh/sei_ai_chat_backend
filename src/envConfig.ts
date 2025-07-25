@@ -11,6 +11,7 @@ const env = cleanEnv(process.env, {
     SECRET_KEY: str({default:'IAMSHREYANSH'}),
     GEMINI_API_KEY: str(),
     LLAMA_API_KEY: str(),
+    MONGO_URI: str(),
 })
 
 

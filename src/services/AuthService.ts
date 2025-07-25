@@ -36,13 +36,13 @@ export class AuthService {
             throw new Error('Signature verification failed');
 
         const token = jwt.sign({address}, env.SECRET_KEY, {
-            expiresIn: 2 * 24 * 60 * 60
+            expiresIn: 7 * 24 * 60 * 60
         })
 
         await this.redisService.setValue(
             createHash('sha256').update(token).digest('hex'),
             `${address} ${userData._id}`,
-            2 * 24 * 60 * 60
+            7 * 24 * 60 * 60
         )
         
         return token
