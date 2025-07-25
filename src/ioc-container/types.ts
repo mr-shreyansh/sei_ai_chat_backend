@@ -10,6 +10,7 @@ export const TYPES = {
     LlmService: Symbol.for('LlmService'),
     RedisService: Symbol.for('RedisService'),
     MCPService: Symbol.for('MCPService'),
+    UserService: Symbol.for('UserService'),
 
     // database
     UserOp: Symbol.for('UserOp'),

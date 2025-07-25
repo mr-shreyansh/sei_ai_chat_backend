@@ -32,4 +32,12 @@ export class AuthController {
        const token = await this.authservice.login(signedMessage,address,message);
        return {token}
     }
+
+      @httpPost('/verify')
+    private async verify(@request() req: Request): Promise<boolean> {
+        const userAddress = await this.authservice.verifyUserSession(
+            req.headers.authorization,
+        )
+        return Boolean(userAddress)
+    }
 }

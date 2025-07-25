@@ -1,5 +1,5 @@
 
 export interface ILlmService {
-    initChat(sessionId?: string): Promise<{ sessionId: string }>;
+    initChat(address: string): Promise<void>;
     sendMessage(prompt: string, sessionId: string): Promise<string | object>;
 }

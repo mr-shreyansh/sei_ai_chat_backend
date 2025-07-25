@@ -4,26 +4,28 @@ import { TYPES } from "../ioc-container/types";
 import { type Request } from "express";
 import { ILlmService } from "../services/interfaces/ILlmService";
 import AuthMiddleware from "../middleware/AuthMiddleware";
+import { AuthenticatedRequest } from "../types/requestTypes";
 
-@controller("/llm")
+@controller("/llm", TYPES.AuthMiddleware)
 export class LlmController {
   constructor(@inject(TYPES.LlmService) private llmService: ILlmService) {}
 
   @httpPost("/init")
   private async init(
-    @request() req: Request<unknown, unknown, { sessionId: string | null }>
-  ): Promise<{ success: boolean; sessionId: string }> {
-    const { sessionId } = req.body;
-    const response = await this.llmService.initChat(sessionId);
-    return { success: true, sessionId: response.sessionId };
+    @request() req: AuthenticatedRequest
+  ): Promise<{ success: boolean }> {
+    const address = req.userAddress;
+    const response = await this.llmService.initChat(address);
+    return { success: true };
   }
 
   @httpPost("/chat")
   private async chat(
     @request()
-    req: Request<unknown, unknown, { prompt: string; sessionId: string }>
+    req: AuthenticatedRequest
   ): Promise<string | object> {
-    const { prompt, sessionId } = req.body;
-    return this.llmService.sendMessage(prompt, sessionId);
+    const { prompt } = req.body;
+    const address = req.userAddress
+    return this.llmService.sendMessage(prompt, address);
   }
 }
