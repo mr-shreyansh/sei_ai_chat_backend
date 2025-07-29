@@ -26,7 +26,7 @@ export class MCPService {
 
       this.eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("data stream", data);
+
         if (data.type === "session_init") {
           this.sessionId = data.sessionId;
           console.log("Session established:", this.sessionId);
@@ -86,7 +86,6 @@ export class MCPService {
           clearTimeout(timeout);
           const result = this.responses.get(requestId);
           this.responses.delete(requestId);
-          console.log("Tool response found:", result);
           if (result?.result?.tools && Array.isArray(result.result.tools)) {
             result.result.tools = result.result.tools.map((tool) => {
               if (tool.inputSchema) {
@@ -107,8 +106,6 @@ export class MCPService {
   }
 
   async callTool(toolName: string, args: any): Promise<any> {
-   
-
     const requestId = `backend-${Date.now()}`;
     const mcpRequest = {
       jsonrpc: "2.0",

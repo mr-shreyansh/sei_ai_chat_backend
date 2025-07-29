@@ -10,6 +10,7 @@ import OpenAI from "openai";
 import { v4 as uuidv4 } from "uuid";
 import { UserService } from "./UserService";
 import { Chat } from "../types/history";
+import { TOKEN_ADDRESS_MAPPING } from "../data/token";
 
 @injectable()
 export class LlmService implements ILlmService {
@@ -46,8 +47,13 @@ export class LlmService implements ILlmService {
     const toolsResponse = await this.mcpService.getTools();
     const tools =
       toolsResponse?.result?.tools || toolsResponse?.tools || toolsResponse;
-    const chatHistory = await this.userService.getUserInfo(address);
-    console.log("chatHistoy", chatHistory);
+     let chatHistory:Chat[] = []
+     chatHistory.push({
+        role:'model',
+        parts:[{text:JSON.stringify(TOKEN_ADDRESS_MAPPING)},{text:`My account address is ${address}`}]
+      })
+      const previousChats = await this.userService.getUserInfo(address);
+    chatHistory.push(...previousChats);
     const chat = this.genAI.chats.create({
       model: this.model,
       history: chatHistory,
@@ -87,6 +93,7 @@ export class LlmService implements ILlmService {
 
       const output = await this.mcpService.callTool(call.name, call.args);
       console.log("this is output", output);
+      console.dir(output, { depth: null });
 
       const functionResponsePart: Part = {
         functionResponse: {
