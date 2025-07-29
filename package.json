@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "rm -rf dist && npx tsc",
+    "start": "node dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon -w .env -w ./src src/app.ts"
   },
@@ -41,6 +43,7 @@
     "openai": "^5.10.1",
     "pg": "^8.13.1",
     "redis": "^4.7.0",
+    "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.1",
     "validator": "^13.12.0"
   }
