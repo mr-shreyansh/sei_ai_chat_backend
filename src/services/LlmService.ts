@@ -1,4 +1,4 @@
-import { GoogleGenAI, Part } from "@google/genai";
+import { FunctionResponse, GoogleGenAI, Part } from "@google/genai";
 import fetch from "node-fetch";
 import { inject, injectable } from "inversify";
 import { ILlmService } from "./interfaces/ILlmService";
@@ -53,6 +53,8 @@ export class LlmService implements ILlmService {
         parts:[{text:JSON.stringify(TOKEN_ADDRESS_MAPPING)},{text:`My account address is ${address}`}]
       })
       const previousChats = await this.userService.getUserInfo(address);
+      console.log('check this out', previousChats)
+      if(previousChats)
     chatHistory.push(...previousChats);
     const chat = this.genAI.chats.create({
       model: this.model,
@@ -85,26 +87,29 @@ export class LlmService implements ILlmService {
 
     const result = await chat.sendMessage({ message: prompt });
     console.log("this is the first result", result);
-    const call = result?.functionCalls?.[0];
+    const calls = result?.functionCalls;
 
-    if (call) {
-      console.log(`Gemini wants to call the tool: ${call.name}`);
-      console.log(`With arguments: ${JSON.stringify(call.args)}`);
-
-      const output = await this.mcpService.callTool(call.name, call.args);
-      console.log("this is output", output);
-      console.dir(output, { depth: null });
-
-      const functionResponsePart: Part = {
-        functionResponse: {
-          name: call.name,
-          response: output?.result,
-        },
-      };
-
+    if (calls && calls.length) {
+      console.log('no. of function calls:',result?.functionCalls?.length)
+      const outputs = [];
+      const functionResponseParts: Part[] = [];
+      for(let i =0; i<calls.length; i++){
+        const output = await this.mcpService.callTool(calls[i].name, calls[i].args);
+        outputs.push(output?.result);
+        const functionResponsePart:Part = {
+          functionResponse: {
+            name: calls[i].name,
+            response: output?.result 
+          }
+        }
+        functionResponseParts.push(functionResponsePart);
+      }
+      console.log('we are here',functionResponseParts)
+      console.dir(functionResponseParts, {depth: null})
       const finalResult = await chat.sendMessage({
-        message: [functionResponsePart],
+        message: functionResponseParts,
       });
+      console.log('this is final result',finalResult.text)
       if (finalResult.text)
         history.push({
           role: "model",
@@ -114,7 +119,7 @@ export class LlmService implements ILlmService {
       await this.userService.addUserHistory(address, history);
 
       return {
-        tool: output?.result,
+        tools: outputs,
         chat: finalResult.text,
       };
     }
