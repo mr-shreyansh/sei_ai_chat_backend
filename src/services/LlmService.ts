@@ -54,11 +54,6 @@ export class LlmService implements ILlmService {
     const tools =
       toolsResponse?.result?.tools || toolsResponse?.tools || toolsResponse;
     const langGraphTools: StructuredTool[] = tools.map((tool: any) => {
-      if(tool.name === "transfer_sei") {
-        console.dir(tool, { depth: null });
-        const t = new MCPToolWrapper(this.mcpService, tool);
-        console.log(t.schema._def)
-      }
       return new MCPToolWrapper(this.mcpService, tool)
   });
     const agentCheckpoint = new MemorySaver();
@@ -85,13 +80,15 @@ export class LlmService implements ILlmService {
       { configurable: { thread_id: address } }, // Use address as thread_id
     );
 
-    console.log(
-      agentFinalState.messages[agentFinalState.messages.length - 1].content,
+    console.dir(
+      agentFinalState
     );
 
-    return { 
+    const res = { 
       chat: agentFinalState.messages[agentFinalState.messages.length - 1].content, 
-      tool: agentFinalState.tools
+      tool: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg.content).result)
     };
+    console.log("Response from agent:", res,agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
+    return res
   }
 }
