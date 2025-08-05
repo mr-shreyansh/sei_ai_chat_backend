@@ -86,7 +86,7 @@ export class LlmService implements ILlmService {
 
     const res = { 
       chat: agentFinalState.messages[agentFinalState.messages.length - 1].content, 
-      tool: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg.content).result)
+      tools: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg.content).result)
     };
     console.log("Response from agent:", res,agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
     return res
