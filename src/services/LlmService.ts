@@ -106,4 +106,97 @@ export class LlmService implements ILlmService {
     console.log("Response from agent:", res,agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
     return res
   }
+
+  async addtxn(prompt: string, address: string): Promise<string | object> {
+    if (!this.mcpService.isConnected()) {
+      await this.mcpService.connectToMCP();
+    }
+    // Ensure chat is initialized
+    const chat = await this.initChat(address);
+
+    if (!chat) throw new Error("Chat session not initialized");
+    let history: Chat[] = [];
+
+    history.push({
+      role: "user",
+      parts: [{ text: prompt+"get the details for this hash of just executed transaction" }],
+    });
+
+    const result = await chat.sendMessage({ message: prompt+"get the details for this hash of just executed transaction by calling get_transaction tool" });
+    console.log("this is the first result", result);
+    const calls = result?.functionCalls;
+
+    if (calls && calls.length) {
+      const outputs = [];
+      const functionResponseParts: Part[] = [];
+      for (let i = 0; i < calls.length; i++) {
+        const output = await this.mcpService.callTool(
+          calls[i].name,
+          calls[i].args
+        );
+        outputs.push(output?.result);
+        const functionResponsePart: Part = {
+          functionResponse: {
+            name: calls[i].name,
+            response: output?.result,
+          },
+        };
+        const contentArray = output?.result?.content;
+        let txObject = null;
+
+        if (
+          calls[i].name === "get_transaction" &&
+          Array.isArray(contentArray) &&
+          contentArray.length > 0 &&
+          contentArray[0].type === "text"
+        ) {
+          try {
+            txObject = JSON.parse(contentArray[0].text);
+            console.log("this is my baby", txObject);
+            await this.userService.addUserTransaction(address, {
+              hash: txObject?.hash,
+              value: txObject?.value,
+              token: txObject?.token,
+              gas: txObject?.gas,
+              gasPrice: txObject?.gasPrice,
+              from: txObject?.from,
+              to: txObject?.to,
+              type: txObject?.type,
+              input: txObject?.input,
+              blockNumber: txObject?.blockNumber,
+            });
+          } catch (err) {
+            console.error("Failed to parse transaction JSON:", err);
+          }
+        }
+
+        functionResponseParts.push(functionResponsePart);
+      }
+      console.dir(functionResponseParts, { depth: null });
+      const finalResult = await chat.sendMessage({
+        message: functionResponseParts,
+      });
+      if (finalResult.text)
+        history.push({
+          role: "model",
+          parts: [{ text: finalResult.text }],
+        });
+
+      await this.userService.addUserHistory(address, history);
+
+      return {
+        tools: outputs,
+        chat: finalResult.text,
+      };
+    }
+    if (result.text)
+      history.push({
+        role: "model",
+        parts: [{ text: result.text }],
+      });
+
+    await this.userService.addUserHistory(address, history);
+
+    return { chat: result.text, tool: null };
+  }
 }
