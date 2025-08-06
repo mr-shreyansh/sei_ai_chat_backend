@@ -12,11 +12,13 @@ import { LlmService } from "../services/LlmService";
 import { ILlmService } from "../services/interfaces/ILlmService";
 import { MCPService } from "../services/MCPService";
 import { UserService } from "../services/UserService";
+import { UserController } from "../controller/UserController";
 
 const container = new Container()
 
 container.bind<AuthController>(TYPES.AuthController).to(AuthController)
 container.bind<LlmController>(TYPES.LlmController).to(LlmController)
+container.bind<UserController>(TYPES.UserController).to(UserController)
 
 container.bind<AuthService>(TYPES.AuthService).to(AuthService)
 container.bind<ILlmService>(TYPES.LlmService).to(LlmService)

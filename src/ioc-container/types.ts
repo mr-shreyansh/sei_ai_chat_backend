@@ -3,6 +3,7 @@ export const TYPES = {
     // controllers
     AuthController: Symbol.for('AuthController'),
     LlmController: Symbol.for('LlmController'),
+    UserController: Symbol.for('UserController'),
     Hello: Symbol.for('Hello'),
 
     // services

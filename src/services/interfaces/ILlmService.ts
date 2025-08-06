@@ -1,5 +1,6 @@
 
 export interface ILlmService {
     initChat(address: string): Promise<void>;
-    sendMessage(prompt: string, sessionId: string): Promise<string | object>;
+    sendMessage(prompt: string, address: string): Promise<string | object>;
+    addtxn(prompt: string, address:string ): Promise<string | object>;
 }

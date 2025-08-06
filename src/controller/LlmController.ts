@@ -28,4 +28,14 @@ export class LlmController {
     const address = req.userAddress
     return this.llmService.sendMessage(prompt, address);
   }
+
+  @httpPost("/addtxn")
+  private async addtxn(
+    @request()
+    req: AuthenticatedRequest
+  ): Promise<string | object> {
+    const {prompt} = req.body;
+    const address = req.userAddress;
+    return this.llmService.addtxn(prompt, address);
+  }
 }
