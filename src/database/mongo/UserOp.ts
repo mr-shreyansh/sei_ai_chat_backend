@@ -42,8 +42,8 @@ export class UserOp {
       console.log('user address',id)
       const user = await UserData.findOne({address: id}).lean();
       if(!user) throw new Error("No user found");
-      const result : Transaction[] = await TransactionData.find({user: user._id}).sort({timestamp: -1}).lean();
-      return result
+      const result = await TransactionData.find({user: user._id}).sort({timestamp: -1}).lean();
+      return result as Transaction[];
     } catch(err){
       throw new Error(`Error in fetch user transactions: ${err}`)
     }
