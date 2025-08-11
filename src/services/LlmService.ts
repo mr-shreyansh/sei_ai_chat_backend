@@ -18,8 +18,16 @@ import {ChatGoogleGenerativeAI} from "@langchain/google-genai";
 import { HumanMessage } from "@langchain/core/messages";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { StructuredTool } from "@langchain/core/tools";
+import { MongoClient } from "mongodb";
+import { MongoDBSaver } from "@langchain/langgraph-checkpoint-mongodb";
+import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 
 
+// The prompt is static and can be defined once.
+const systemPrompt = `You are a helpful assistant. You have access to the conversation history. Use it to answer the user's questions.`;
+// const prompt = ChatPromptTemplate.fromMessages([
+//   ["system", systemPrompt],
+// ]);
 @injectable()
 export class LlmService implements ILlmService {
   private genAI: ChatGoogleGenerativeAI;
@@ -32,6 +40,7 @@ export class LlmService implements ILlmService {
     @inject(TYPES.MCPService) private mcpService: MCPService,
     @inject(TYPES.UserService) private userService: UserService
   ) {
+    console.log("constructor")
     this.genAI = new ChatGoogleGenerativeAI({
       model:'gemini-2.5-flash',
       temperature:0,
@@ -56,11 +65,15 @@ export class LlmService implements ILlmService {
     const langGraphTools: StructuredTool[] = tools.map((tool: any) => {
       return new MCPToolWrapper(this.mcpService, tool)
   });
-    const agentCheckpoint = new MemorySaver();
+  // Connect to your Atlas cluster or local Atlas deployment
+  const client = new MongoClient(env.MONGO_URI);
+  // Initialize the MongoDB checkpointer
+  const checkpointer = new MongoDBSaver({client});
     const agent = createReactAgent({
       llm: this.genAI,
       tools: langGraphTools,
-      checkpointSaver: agentCheckpoint
+      stateModifier: systemPrompt,
+      checkpointSaver: checkpointer
     });
     
     return agent;
@@ -71,6 +84,7 @@ export class LlmService implements ILlmService {
     if (!this.mcpService.isConnected()) {
       await this.mcpService.connectToMCP();
     }
+    //only initialize if needed
     const chat = await this.initChat(address);
 
     if (!chat) throw new Error("Chat session not initialized");
@@ -80,13 +94,14 @@ export class LlmService implements ILlmService {
       { configurable: { thread_id: address } }, // Use address as thread_id
     );
 
+    console.log("Agent final state:")
     console.dir(
       agentFinalState
     );
 
     const res = { 
       chat: agentFinalState.messages[agentFinalState.messages.length - 1].content, 
-      tools: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg.content).result)
+      tools: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg?.content)?.result)
     };
     console.log("Response from agent:", res,agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
     return res
