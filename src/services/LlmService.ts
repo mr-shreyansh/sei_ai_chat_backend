@@ -89,21 +89,30 @@ export class LlmService implements ILlmService {
 
     if (!chat) throw new Error("Chat session not initialized");
 
+    const initialState = await chat.getState({ configurable: { thread_id: address } });
+    console.log('hi')
+    console.dir(initialState);
+
     const agentFinalState = await chat.invoke(
       { messages: [new HumanMessage(prompt)] }, // Use the actual prompt instead of hardcoded message
       { configurable: { thread_id: address } }, // Use address as thread_id
     );
 
+    const newMessages = initialState?.values?.messages 
+      ? agentFinalState.messages.slice(initialState.values.messages.length)
+      : agentFinalState.messages;
     console.log("Agent final state:")
     console.dir(
       agentFinalState
     );
+    console.log("New messages:")
+    console.dir(newMessages);
 
     const res = { 
-      chat: agentFinalState.messages[agentFinalState.messages.length - 1].content, 
-      tools: agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg?.content)?.result)
+      chat: newMessages[newMessages.length - 1].content, 
+      tools: newMessages.filter((msg: any) => msg.constructor.name === "ToolMessage").map((msg: any) => JSON.parse(msg?.content)?.result)
     };
-    console.log("Response from agent:", res,agentFinalState.messages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
+    console.log("Response from agent:", res,newMessages.filter((msg: any) => msg.constructor.name === "ToolMessage"))
     return res
   }
 }
