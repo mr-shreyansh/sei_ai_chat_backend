@@ -39,7 +39,6 @@ export class UserOp {
 
   async getUserTransactions(id: string) : Promise<Transaction[]> {
     try{
-      console.log('user address',id)
       const user = await UserData.findOne({address: id}).lean();
       if(!user) throw new Error("No user found");
       const result = await TransactionData.find({user: user._id}).sort({timestamp: -1}).lean();

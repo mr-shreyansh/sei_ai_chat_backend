@@ -12,7 +12,7 @@ const transactionSchema = new Schema({
     value: {type: String},
     status: {type: String},
     token: {type: String},
-    timestamp: {type: Date, default: Date.now()},
+    timestamp: {type: Date, default: Date.now},
     gas: {type:String},
     gasPrice: {type:String},
     from: {type:String},

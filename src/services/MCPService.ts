@@ -137,11 +137,10 @@ export class MCPService {
 
       const checkResponse = () => {
         if (this.responses.has(requestId)) {
-          console.log("5");
           clearTimeout(timeout);
           const result = this.responses.get(requestId);
           this.responses.delete(requestId);
-          console.log("Tool response found:", result);
+          // console.log("Tool response found:", result);
 
           resolve(result);
         } else {

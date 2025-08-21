@@ -17,7 +17,6 @@ export class UserController {
         @request() req: AuthenticatedRequest
     ) {
         const address = req.userAddress;
-        console.log('hit me hard',req.userAddress)
         const result = await this.userService.getUserTransactions(address)
         return result;
     }
