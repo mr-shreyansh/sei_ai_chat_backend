@@ -18,7 +18,7 @@ export class MCPToolWrapper extends StructuredTool<any, any> {
     this.toolName = toolConfig.name;
     
     // Convert MCP tool schema to Zod schema
-    console.log("toolconfig",toolConfig, toolConfig.inputSchema)
+    // console.log("toolconfig",toolConfig, toolConfig.inputSchema)
     this.schema = this.convertMCPSchemaToZod(toolConfig.parameters);
   }
 
@@ -58,13 +58,13 @@ export class MCPToolWrapper extends StructuredTool<any, any> {
         zodObject[key] = zodObject[key].optional();
       }
     }
-    console.log("Converted Zod schema:", zodObject);
+    // console.log("Converted Zod schema:", zodObject);
     return z.object(zodObject);
   }
   async _call(args: any): Promise<string> {
     try {
-      console.log(`____Calling MCP tool: ${this.toolName} with args:`, args);
-      console.log("Tool schema:", this.schema);
+      // console.log(`____Calling MCP tool: ${this.toolName} with args:`, args);
+      // console.log("Tool schema:", this.schema);
       const result = await this.mcpService.callTool(this.toolName, args);
       return JSON.stringify(result);
     } catch (error) {
