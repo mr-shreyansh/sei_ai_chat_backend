@@ -28,7 +28,14 @@ import { ethers } from "ethers";
 import { twapABI } from "./twapABI";
 
 // The prompt is static and can be defined once.
-const systemPrompt = `You are a helpful assistant. You have access to the conversation history. Use it to answer the user's questions.`;
+const systemPrompt = (address:string)=> `You are Zyra, a helpful assistant whose job is to automate, plan and execute trades on behalf of the user. You have access to the conversation history. Use it to answer the user's questions. User's address is ${address}. Note the following points:
+- You are doing transactions on Sei chain. The native token on Sei is sei. 
+- For transactions involving sei, it needs to be converted into an erc20 wsei token first(wrap), then the transaction can be executed. If sei is the destination, do the transaction in wsei then unwrap it into sei.
+- For some transacrtions, you may get a response that allowance is insufficient, in that case, use the approve_erc20 tool to get the allowance.
+- You can send multiple unsigned tx to the user, the user will sign them one by one. 
+- For trades, suggest values, and strategies for the user.
+- For token transfers, or tx involving token transfers, first check if the user has enough funds.
+- Keep your responses brief, and to the point.`;
 // const prompt = ChatPromptTemplate.fromMessages([
 //   ["system", systemPrompt],
 // ]);
@@ -108,7 +115,7 @@ export class LlmService implements ILlmService {
     const agent = createReactAgent({
       llm: this.genAI,
       tools: langGraphTools,
-      stateModifier: systemPrompt,
+      stateModifier: systemPrompt(address),
       checkpointSaver: checkpointer,
     });
 
@@ -148,7 +155,7 @@ export class LlmService implements ILlmService {
       chat: newMessages[newMessages.length - 1].content,
       tools: newMessages
         .filter((msg: any) => msg.constructor.name === "ToolMessage")
-        .map((msg: any) => JSON.parse(msg?.content)?.result),
+        .map((msg: any) => JSON.parse(msg?.content)?.result).filter((msg: any) => msg!=null),
     };
     console.log(
       "Response from agent:",
@@ -179,7 +186,7 @@ export class LlmService implements ILlmService {
         messages: [
           new HumanMessage(
             prompt +
-              "get the details for this hash of just executed transaction by calling get_transaction tool"
+              " - get the details for this hash of just executed transaction by calling get_transaction tool. Give a breif output assuming the reader does not care about the technicalities. Give a link in block explorer as well in the format: https://seitrace.com/tx/<tx hash>"
           ),
         ],
       }, // Use the actual prompt instead of hardcoded message
@@ -198,7 +205,7 @@ export class LlmService implements ILlmService {
       chat: newMessages[newMessages.length - 1].content,
       tools: newMessages
         .filter((msg: any) => msg.constructor.name === "ToolMessage")
-        .map((msg: any) => JSON.parse(msg?.content)?.result)[0].content[0].text,
+        .map((msg: any) => JSON.parse(msg?.content)?.result),
     };
 
     console.log("this is your final state");
