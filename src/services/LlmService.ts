@@ -59,6 +59,14 @@ export class LlmService implements ILlmService {
     });
   }
 
+  async clearChat(address:string){
+    // Connect to your Atlas cluster or local Atlas deployment
+    const client = new MongoClient(env.MONGO_URI);
+    // Initialize the MongoDB checkpointer
+    const checkpointer = new MongoDBSaver({ client });
+    await checkpointer.deleteThread(address);
+    
+  }
   async getChatHistory(address:string): Promise<any> {
     if (!this.mcpService.isConnected()) {
       await this.mcpService.connectToMCP();

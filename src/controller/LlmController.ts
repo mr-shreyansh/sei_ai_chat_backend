@@ -49,4 +49,13 @@ export class LlmController {
     return this.llmService.getChatHistory(address);
   }
 
+  @httpGet("/clearChat")
+  private async clearChat(
+    @request()
+    req: AuthenticatedRequest
+  ): Promise<{ success: boolean }> {
+    const address = req.userAddress;
+    await this.llmService.clearChat(address);
+    return { success: true };
+  }
 }
