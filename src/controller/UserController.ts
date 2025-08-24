@@ -6,7 +6,7 @@ import { AuthenticatedRequest } from "../types/requestTypes";
 import AuthMiddleware from "../middleware/AuthMiddleware";
 
 
-@controller('/user')
+@controller('/user', TYPES.AuthMiddleware)
 export class UserController {
     constructor(
         @inject(TYPES.UserService) private userService: UserService,
@@ -25,8 +25,8 @@ export class UserController {
         @request()
         req: AuthenticatedRequest
       ): Promise<any> {
-        const {address} = req.query;
-        return this.userService.getOrderStatus(address as string);
+        const address = req.userAddress;
+        return this.userService.getOrderStatus(address);
       }
 
 
