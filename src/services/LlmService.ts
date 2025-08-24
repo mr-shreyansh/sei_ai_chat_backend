@@ -59,6 +59,32 @@ export class LlmService implements ILlmService {
     });
   }
 
+  async getChatHistory(address:string): Promise<any> {
+    if (!this.mcpService.isConnected()) {
+      await this.mcpService.connectToMCP();
+    }
+    //only initialize if needed
+    const chat = await this.initChat(address);
+
+    if (!chat) throw new Error("Chat session not initialized");
+    const initialState = await chat.getState({
+      configurable: { thread_id: address },
+    });
+    const state = initialState?.values?.messages;
+    const messages = state
+        .filter(message => {
+          const hasValidId = message.constructor.name === 'HumanMessage' || message.constructor.name === 'AIMessage';
+          const hasContent = message?.content && 
+                            typeof message?.content === 'string';
+          return hasValidId && hasContent;
+        })
+        .map(message => ({
+          type: message.constructor.name,
+          content: message.content
+        }));
+    return messages
+
+  }
   // Initialize and store a chat session for a sessionId (generate if not provided)
   async initChat(address: string): Promise<any> {
     const toolsResponse = await this.mcpService.getTools();
@@ -199,7 +225,7 @@ export class LlmService implements ILlmService {
           type: txObject?.type,
           input: txObject?.input,
           blockNumber: txObject?.blockNumber,
-          orderId: orderId,
+          orderId: orderId?orderId:undefined,
         });
       } catch (err) {
         console.error("Failed to parse transaction JSON:", err);

@@ -1,4 +1,4 @@
-import { controller, httpPost, request } from "inversify-express-utils";
+import { controller, httpGet, httpPost, request } from "inversify-express-utils";
 import { inject } from "inversify";
 import { TYPES } from "../ioc-container/types";
 import { type Request } from "express";
@@ -38,6 +38,15 @@ export class LlmController {
     const address = req.userAddress;
     const {orderId} = req.query;
     return this.llmService.addtxn(prompt, address, orderId as string);
+  }
+
+  @httpGet("/getChatHistory")
+  private async getChatHistory(
+    @request()
+    req: AuthenticatedRequest
+  ): Promise<string | object> {
+    const address = req.userAddress;
+    return this.llmService.getChatHistory(address);
   }
 
 }
