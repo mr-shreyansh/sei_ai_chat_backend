@@ -24,6 +24,8 @@ import {
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from "@langchain/core/prompts";
+import { ethers } from "ethers";
+import { twapABI } from "./twapABI";
 
 // The prompt is static and can be defined once.
 const systemPrompt = `You are a helpful assistant. You have access to the conversation history. Use it to answer the user's questions.`;
@@ -122,7 +124,8 @@ export class LlmService implements ILlmService {
     return res;
   }
 
-  async addtxn(prompt: string, address: string): Promise<string | object> {
+  
+  async addtxn(prompt: string, address: string, orderId?:string): Promise<string | object> {
     if (!this.mcpService.isConnected()) {
       await this.mcpService.connectToMCP();
     }
@@ -196,6 +199,7 @@ export class LlmService implements ILlmService {
           type: txObject?.type,
           input: txObject?.input,
           blockNumber: txObject?.blockNumber,
+          orderId: orderId,
         });
       } catch (err) {
         console.error("Failed to parse transaction JSON:", err);

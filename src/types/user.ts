@@ -22,4 +22,5 @@ export type Transaction = {
   type: string;
   input: string;
   blockNumber: string;
+  orderId?: string;
 }

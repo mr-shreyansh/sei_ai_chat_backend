@@ -36,6 +36,8 @@ export class LlmController {
   ): Promise<string | object> {
     const {prompt} = req.body;
     const address = req.userAddress;
-    return this.llmService.addtxn(prompt, address);
+    const {orderId} = req.query;
+    return this.llmService.addtxn(prompt, address, orderId as string);
   }
+
 }

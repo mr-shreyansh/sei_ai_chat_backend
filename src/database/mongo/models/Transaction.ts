@@ -20,6 +20,7 @@ const transactionSchema = new Schema({
     type:{type:String},
     input:{type:String},
     blockNumber:{type:String},
+    orderId:{type:String, required:false},
 },
 {
     timestamps:true,
