@@ -186,7 +186,7 @@ export class LlmService implements ILlmService {
         messages: [
           new HumanMessage(
             prompt +
-              " - get the details for this hash of just executed transaction by calling get_transaction tool. Give a breif output assuming the reader does not care about the technicalities. Give a link in block explorer as well in the format: https://seitrace.com/tx/<tx hash>"
+              " - get the details for this hash of just executed transaction by calling get_transaction tool. Give a breif output assuming the reader does not care about the technicalities. Give a link in block explorer as well in the format: https://seitrace.com/tx/<tx hash>. Then, continue with your previous task/process if its ongoing."
           ),
         ],
       }, // Use the actual prompt instead of hardcoded message
