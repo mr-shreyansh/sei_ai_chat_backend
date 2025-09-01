@@ -23,7 +23,7 @@ container.bind<UserController>(TYPES.UserController).to(UserController)
 container.bind<AuthService>(TYPES.AuthService).to(AuthService)
 container.bind<ILlmService>(TYPES.LlmService).to(LlmService)
 container.bind<RedisService>(TYPES.RedisService).to(RedisService)
-container.bind<MCPService>(TYPES.MCPService).to(MCPService)
+container.bind<MCPService>(TYPES.MCPService).to(MCPService).inSingletonScope()
 container.bind<UserService>(TYPES.UserService).to(UserService);
 
 container.bind<Hello>(TYPES.Hello).to(Hello);
